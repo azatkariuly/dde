@@ -158,4 +158,5 @@ fig.suptitle('Convergence History', fontsize=16)
 # Show the plot
 plt.tight_layout()
 plt.subplots_adjust(top=0.85)  # Adjust the top space to fit the main title
+plt.savefig("plot.png")
 plt.show()
