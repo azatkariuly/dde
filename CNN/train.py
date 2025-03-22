@@ -4,26 +4,12 @@ import copy
 from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
-# from model import CNNModel
-from model_quantized import CNNModel_Q
+from model import CNNModel
+# from model_quantized import CNNModel_Q
 from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
-
-def save_quantized_model(model, path="quantized_model.pt"):
-    quantized_state_dict = {}
-    
-    for name, param in model.state_dict().items():
-        if "step_size" in name:
-            # Keep step size in float32 to avoid issues during reloading
-            quantized_state_dict[name] = param.float()
-        else:
-            # Convert weights to int8 representation
-            quantized_state_dict[name] = param.to(torch.int8)
-    
-    torch.save(quantized_state_dict, path)
-    print(f"Quantized model saved at {path}")
 
 params_model = {
         "shape_in": (3, 480, 480), 
@@ -31,10 +17,10 @@ params_model = {
         "num_fc1": 100,
         "dropout_rate": 0.25,
         "num_classes": 2,
-        "nbits": 8,
+        # "nbits": 8,
 }
 
-cnn_model = CNNModel_Q(params_model)
+cnn_model = CNNModel(params_model)
 
 # define computation hardware approach (GPU/CPU)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -79,7 +65,7 @@ def train_val(model, params,verbose=False):
         '''
         
         model.train()
-        train_loss, train_metric = loss_epoch(model,loss_func,train_dl,opt)
+        train_loss, train_metric = loss_epoch(model,loss_func,train_dl,opt, device=device)
 
         # collect losses
         loss_history["train"].append(train_loss)
@@ -93,7 +79,7 @@ def train_val(model, params,verbose=False):
         
         model.eval()
         with torch.no_grad():
-            val_loss, val_metric = loss_epoch(model,loss_func,val_dl)
+            val_loss, val_metric = loss_epoch(model,loss_func,val_dl,device=device)
         
         # store best model
         if(val_loss < best_loss):
@@ -101,8 +87,7 @@ def train_val(model, params,verbose=False):
             best_model_wts = copy.deepcopy(model.state_dict())
             
             # store weights into a local file
-            # torch.save(model.state_dict(), weight_path)
-            save_quantized_model(model, "quantized_model.pt")
+            torch.save(model.state_dict(), weight_path)
             if(verbose):
                 print("Copied best model weights!")
         
@@ -110,20 +95,19 @@ def train_val(model, params,verbose=False):
         loss_history["val"].append(val_loss)
         metric_history["val"].append(val_metric)
         
-        # # learning rate schedule
-        # lr_scheduler.step(val_loss)
-        # if current_lr != get_lr(opt):
-        #     if(verbose):
-        #         print("Loading best model weights!")
-        #     # model.load_state_dict(best_model_wts) 
-        #     # save_quantized_model(model, "quantized_model.pt")
+        # learning rate schedule
+        lr_scheduler.step(val_loss)
+        if current_lr != get_lr(opt):
+            if(verbose):
+                print("Loading best model weights!")
+            model.load_state_dict(best_model_wts) 
 
         if(verbose):
             print(f"train loss: {train_loss:.6f}, dev loss: {val_loss:.6f}, accuracy: {100*val_metric:.2f}")
             print("-"*10) 
 
-    # # load best model weights
-    # model.load_state_dict(best_model_wts)
+    # load best model weights
+    model.load_state_dict(best_model_wts)
         
     return model, loss_history, metric_history
 
