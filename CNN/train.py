@@ -12,7 +12,7 @@ from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
 
 params_model = {
-        "shape_in": (3, 480, 480), 
+        "shape_in": (3, 250, 250), 
         "initial_filters": 8,    
         "num_fc1": 100,
         "dropout_rate": 0.25,
@@ -26,7 +26,7 @@ cnn_model = CNNModel(params_model)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = cnn_model.to(device)
 
-summary(cnn_model, input_size=(3, 480, 480),device=device.type)
+summary(cnn_model, input_size=(3, 250, 250),device=device.type)
 
 loss_func = nn.NLLLoss(reduction="sum")
 
@@ -114,11 +114,11 @@ def train_val(model, params,verbose=False):
 params_train={
  "train": train_loader,"val": val_loader,
  "epochs": 10,
- "optimiser": optim.Adam(cnn_model.parameters(),lr=3e-4),
+ "optimiser": opt,
  "lr_change": ReduceLROnPlateau(opt,
                                 mode='min',
                                 factor=0.5,
-                                patience=20,
+                                patience=10,
                                 verbose=0),
  "f_loss": nn.NLLLoss(reduction="sum"),
  "weight_path": "weights_best_480.pt",

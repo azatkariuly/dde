@@ -9,8 +9,10 @@ import matplotlib.pyplot as plt
 seed = 42
 torch.manual_seed(seed)
 
+
 transform = transforms.Compose([
     transforms.Resize((480, 480)),
+    transforms.CenterCrop(250),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5], std=[0.5])
 ])
