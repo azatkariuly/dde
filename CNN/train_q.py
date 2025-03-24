@@ -113,11 +113,44 @@ params_train = {
 
 model, loss_hist, metric_hist = train_val(model, params_train, verbose=True)
 
-cnn_model.eval()
-cnn_model = torch.quantization.convert(cnn_model, inplace=True)
+model.eval()
+model = torch.quantization.convert(model, inplace=True)
 
 # Save the quantized model
-torch.save(cnn_model.state_dict(), "quantized_model.pt")
+torch.save(model.state_dict(), "quantized_model.pt")
 
 print("Quantization-aware training complete. Model saved as 'quantized_model.pt'.")
+
+import seaborn as sns
+
+# Set the seaborn style
+sns.set(style='whitegrid')
+
+# Assuming `params_train`, `loss_hist`, and `metric_hist` are already defined
+epochs = params_train["epochs"]
+
+# Create a 1x2 subplot
+fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+
+# Plotting the loss history
+sns.lineplot(x=[*range(1, epochs + 1)], y=loss_hist["train"], ax=ax[0], label='Train Loss')
+sns.lineplot(x=[*range(1, epochs + 1)], y=loss_hist["val"], ax=ax[0], label='Validation Loss')
+ax[0].set_title('Loss History')  # Title for the first subplot
+ax[0].legend()  # Show legend for loss plot
+
+# Plotting the metric history
+sns.lineplot(x=[*range(1, epochs + 1)], y=metric_hist["train"], ax=ax[1], label='Train Metric')
+sns.lineplot(x=[*range(1, epochs + 1)], y=metric_hist["val"], ax=ax[1], label='Validation Metric')
+ax[1].set_title('Metric History')  # Title for the second subplot
+ax[1].legend()  # Show legend for metric plot
+
+# Set a common title for the entire figure
+fig.suptitle('Convergence History for QAT (8-bit)', fontsize=16)
+
+# Show the plot
+plt.tight_layout()
+plt.subplots_adjust(top=0.85)  # Adjust the top space to fit the main title
+plt.savefig("plot.png")
+plt.show()
+
 
