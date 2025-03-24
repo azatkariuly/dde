@@ -11,7 +11,7 @@ class CNNModel_LSQ(nn.Module):
         self.nbits = nbits
         
         # Convolution Layers
-        self.conv1 = Conv2dLSQ(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=0, nbits=self.nbits)
+        self.conv1 = Conv2dLSQ(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=1, padding=0, nbits=8)
         self.act1 = ActLSQ(nbits=self.nbits)
         self.conv2 = Conv2dLSQ(in_channels=out_channels, out_channels=2*out_channels, kernel_size=3, stride=1, padding=0, nbits=self.nbits)
         self.act2 = ActLSQ(nbits=self.nbits)
@@ -25,7 +25,7 @@ class CNNModel_LSQ(nn.Module):
         
         self.fc1 = LinearLSQ(self.num_flatten, num_fc1, nbits=self.nbits)
         self.act5 = ActLSQ(nbits=self.nbits)
-        self.fc2 = LinearLSQ(num_fc1, num_classes, nbits=self.nbits)
+        self.fc2 = LinearLSQ(num_fc1, num_classes, nbits=8)
 
     def forward(self, X):
         X = self.act1(F.relu(self.conv1(X)))

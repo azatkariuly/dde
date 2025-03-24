@@ -37,19 +37,16 @@ model.load_state_dict(torch.load("weights_best.pt", map_location=torch.device('c
 
 # Apply Pruning
 def apply_pruning(model, amount=0.5):
-    """ Apply L1 unstructured pruning to convolutional and fully connected layers. """
     for module in model.modules():
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
             prune.l1_unstructured(module, name="weight", amount=amount)
             
 def remove_pruning(model):
-    """ Remove pruning masks, keeping only the pruned weights. """
     for module in model.modules():
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
             prune.remove(module, "weight")
             
 def convert_to_sparse(model):
-    """ Convert the model's weights to sparse format. """
     for module in model.modules():
         if isinstance(module, nn.Conv2d) or isinstance(module, nn.Linear):
             # Convert weight tensor to sparse

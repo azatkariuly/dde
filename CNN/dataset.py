@@ -1,9 +1,11 @@
 import os
 import torch
+import random
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, random_split
 from torchvision.utils import make_grid
 import matplotlib.pyplot as plt
+from PIL import Image
 
 
 seed = 42
@@ -33,30 +35,3 @@ val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 # print('train', len(train_dataset))
 # print('val', len(val_dataset))
 
-# img, label = train_dataset[0]
-
-# print('su', img.shape, label)
-# print("Follwing classes are there : \n", dataset.classes)
-
-# def show_batch(dl):
-#     for images, labels in dl:
-#         fig, ax = plt.subplots(figsize=(16, 12))
-#         ax.set_xticks([])  # Hide x-axis ticks
-#         ax.set_yticks([])  # Hide y-axis ticks
-#         ax.imshow(make_grid(images, nrow=16).permute(1, 2, 0))  # Create and display grid of images
-#         plt.show()  # Ensure the plot is shown
-#         break
-        
-# show_batch(train_loader)
-
-# # Print class names
-# class_names = dataset.classes
-# print("Class Names:", class_names)
-
-# # Example: Fetch one batch from training set
-# images, labels = next(iter(train_loader))
-# print(f"Train Batch shape: {images.shape}, Labels: {labels}")
-
-# # Example: Fetch one batch from test set
-# images, labels = next(iter(test_loader))
-# print(f"Test Batch shape: {images.shape}, Labels: {labels}")

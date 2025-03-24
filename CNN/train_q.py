@@ -10,16 +10,18 @@ from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
+import torch.quantization
 
 cnn_model = CNNModel()
 
+# define computation hardware approach (GPU/CPU)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = cnn_model.to(device)
 
-summary(cnn_model, input_size=(3, 250, 250), device=device.type)
+model.qconfig = torch.quantization.get_default_qat_qconfig("fbgemm")  # Default QAT config
+torch.quantization.prepare_qat(model, inplace=True)  # Prepare model for QAT
 
 loss_func = nn.NLLLoss(reduction="sum")
-
 opt = optim.Adam(cnn_model.parameters(), lr=3e-4)
 
 def train_val(model, params,verbose=False):
@@ -100,52 +102,22 @@ def train_val(model, params,verbose=False):
         
     return model, loss_history, metric_history
 
-params_train={
- "train": train_loader,"val": val_loader,
- "epochs": 50,
- "optimiser": opt,
- "lr_change": ReduceLROnPlateau(opt,
-                                mode='min',
-                                factor=0.5,
-                                patience=5,
-                                verbose=0),
- "f_loss": nn.NLLLoss(reduction="sum"),
- "weight_path": "weights_best.pt",
+params_train = {
+    "train": train_loader, "val": val_loader,
+    "epochs": 50,
+    "optimiser": opt,
+    "lr_change": ReduceLROnPlateau(opt, mode='min', factor=0.5, patience=5, verbose=0),
+    "f_loss": loss_func,
+    "weight_path": "weights_best_qat.pt",
 }
 
-''' Actual Train / Evaluation of CNN Model '''
-# train and validate the model
+model, loss_hist, metric_hist = train_val(model, params_train, verbose=True)
 
-cnn_model, loss_hist, metric_hist=train_val(cnn_model, params_train, verbose=True)
+cnn_model.eval()
+cnn_model = torch.quantization.convert(cnn_model, inplace=True)
 
-import seaborn as sns
+# Save the quantized model
+torch.save(cnn_model.state_dict(), "quantized_model.pt")
 
-# Set the seaborn style
-sns.set(style='whitegrid')
+print("Quantization-aware training complete. Model saved as 'quantized_model.pt'.")
 
-# Assuming `params_train`, `loss_hist`, and `metric_hist` are already defined
-epochs = params_train["epochs"]
-
-# Create a 1x2 subplot
-fig, ax = plt.subplots(1, 2, figsize=(12, 5))
-
-# Plotting the loss history
-sns.lineplot(x=[*range(1, epochs + 1)], y=loss_hist["train"], ax=ax[0], label='Train Loss')
-sns.lineplot(x=[*range(1, epochs + 1)], y=loss_hist["val"], ax=ax[0], label='Validation Loss')
-ax[0].set_title('Loss History')  # Title for the first subplot
-ax[0].legend()  # Show legend for loss plot
-
-# Plotting the metric history
-sns.lineplot(x=[*range(1, epochs + 1)], y=metric_hist["train"], ax=ax[1], label='Train Metric')
-sns.lineplot(x=[*range(1, epochs + 1)], y=metric_hist["val"], ax=ax[1], label='Validation Metric')
-ax[1].set_title('Metric History')  # Title for the second subplot
-ax[1].legend()  # Show legend for metric plot
-
-# Set a common title for the entire figure
-fig.suptitle('Convergence History', fontsize=16)
-
-# Show the plot
-plt.tight_layout()
-plt.subplots_adjust(top=0.85)  # Adjust the top space to fit the main title
-plt.savefig("plot.png")
-plt.show()
