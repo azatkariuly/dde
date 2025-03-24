@@ -13,26 +13,18 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 transform = transforms.Compose([
     transforms.Resize((480, 480)),
+    transforms.CenterCrop(250),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.5], std=[0.5])
 ])
 
-params_model = {
-        "shape_in": (3, 480, 480), 
-        "initial_filters": 8,    
-        "num_fc1": 100,
-        "dropout_rate": 0.25,
-        "num_classes": 2,
-        # "nbits": 8,
-}
+model = CNNModel()
 
-model = CNNModel(params_model)
+model.load_state_dict(torch.load("weights_best_250.pt", map_location=torch.device('cpu')))
 
-model.load_state_dict(torch.load("weights_best.pt", map_location=torch.device('cpu')))
-
-for image in os.listdir(os.path.join(data_path, 'normal')):
+for image in os.listdir(os.path.join(data_path, 'anomaly')):
     if image.endswith('.jpg'):
-        frame = Image.open(os.path.join(data_path, 'normal', image))
+        frame = Image.open(os.path.join(data_path, 'anomaly', image))
         
         input_tensor = transform(frame)
         input_tensor = input_tensor.unsqueeze(0)
@@ -43,10 +35,10 @@ for image in os.listdir(os.path.join(data_path, 'normal')):
         
         print('out', out[0], pred[0])
             
-        # total_anomaly += 1
+        total_anomaly += 1
         
-        # if class_idx == 0:
-        #     total_anomaly_correct += 1
+        if pred[0] == 0:
+            total_anomaly_correct += 1
         
             
 

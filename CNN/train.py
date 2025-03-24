@@ -5,33 +5,25 @@ from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 from model import CNNModel
-# from model_quantized import CNNModel_Q
+from model_quantized import CNNModel_LSQ
 from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
 
-params_model = {
-        "shape_in": (3, 250, 250), 
-        "initial_filters": 8,    
-        "num_fc1": 100,
-        "dropout_rate": 0.25,
-        "num_classes": 2,
-        # "nbits": 8,
-}
-
-cnn_model = CNNModel(params_model)
+cnn_model = CNNModel()
+cnn_model_lsq = CNNModel_LSQ(nbits=8)
 
 # define computation hardware approach (GPU/CPU)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = cnn_model.to(device)
+model_lsq = cnn_model_lsq.to(device)
 
-summary(cnn_model, input_size=(3, 250, 250),device=device.type)
+summary(cnn_model, input_size=(3, 250, 250), device=device.type)
 
 loss_func = nn.NLLLoss(reduction="sum")
 
 opt = optim.Adam(cnn_model.parameters(), lr=3e-4)
-lr_scheduler = ReduceLROnPlateau(opt, mode='min',factor=0.5, patience=20,verbose=1)
 
 def train_val(model, params,verbose=False):
     
@@ -113,21 +105,22 @@ def train_val(model, params,verbose=False):
 
 params_train={
  "train": train_loader,"val": val_loader,
- "epochs": 10,
+ "epochs": 50,
  "optimiser": opt,
  "lr_change": ReduceLROnPlateau(opt,
                                 mode='min',
                                 factor=0.5,
-                                patience=10,
+                                patience=5,
                                 verbose=0),
  "f_loss": nn.NLLLoss(reduction="sum"),
- "weight_path": "weights_best_480.pt",
+ "weight_path": "weights_best.pt",
 }
 
 ''' Actual Train / Evaluation of CNN Model '''
 # train and validate the model
 
-cnn_model,loss_hist,metric_hist=train_val(cnn_model,params_train, verbose=True)
+# cnn_model, loss_hist, metric_hist=train_val(cnn_model, params_train, verbose=True)
+cnn_model_lsq, loss_hist, metric_hist=train_val(cnn_model_lsq, params_train, verbose=True)
 
 import seaborn as sns
 
