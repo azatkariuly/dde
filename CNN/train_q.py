@@ -5,24 +5,24 @@ from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 from model import CNNModel
-from model_quantized import CNNModel_LSQ
+from model_q import CNNModel_LSQ, QuantizedCNNModel
 from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
 import torch.quantization
 
-cnn_model = CNNModel()
+model = CNNModel()
 
 # define computation hardware approach (GPU/CPU)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = cnn_model.to(device)
+model = model.to(device)
 
 model.qconfig = torch.quantization.get_default_qat_qconfig("fbgemm")  # Default QAT config
 torch.quantization.prepare_qat(model, inplace=True)  # Prepare model for QAT
 
 loss_func = nn.NLLLoss(reduction="sum")
-opt = optim.Adam(cnn_model.parameters(), lr=3e-4)
+opt = optim.Adam(model.parameters(), lr=3e-4)
 
 def train_val(model, params,verbose=False):
     

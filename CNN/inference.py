@@ -3,7 +3,7 @@ import os
 import torch
 import time
 # from model import CNNModel
-from model_quantized import CNNModel_Q
+from model_q import CNNModel_Q
 from torchvision import transforms
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
