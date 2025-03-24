@@ -10,7 +10,7 @@ from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
 import matplotlib.pyplot as plt
-import torch.quantization
+from torch.quantization import get_default_qat_qconfig, prepare_qat, convert
 
 model = CNNModel()
 
@@ -18,8 +18,14 @@ model = CNNModel()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = model.to(device)
 
-model.qconfig = torch.quantization.get_default_qat_qconfig("fbgemm")  # Default QAT config
-torch.quantization.prepare_qat(model, inplace=True)  # Prepare model for QAT
+
+model.qconfig = torch.quantization.QConfig(
+    activation=torch.quantization.MinMaxObserver.with_args(dtype=torch.qint8),
+    weight=torch.quantization.PerTensorAffine()
+)
+
+
+torch.quantization.prepare_qat(model, inplace=True)
 
 loss_func = nn.NLLLoss(reduction="sum")
 opt = optim.Adam(model.parameters(), lr=3e-4)
@@ -114,7 +120,7 @@ params_train = {
 model, loss_hist, metric_hist = train_val(model, params_train, verbose=True)
 
 model.eval()
-model = torch.quantization.convert(model, inplace=True)
+model = convert(model, inplace=True)
 
 # Save the quantized model
 torch.save(model.state_dict(), "quantized_model.pt")
