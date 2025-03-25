@@ -1,5 +1,6 @@
 video
 *.pt
 *.pth
+*.mp4
 venv
 __pycache__/
