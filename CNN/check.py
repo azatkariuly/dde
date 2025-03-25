@@ -20,7 +20,7 @@ transform = transforms.Compose([
 
 model = CNNModel()
 
-model.load_state_dict(torch.load("weights_best_250.pt", map_location=torch.device('cpu')))
+model.load_state_dict(torch.load("weights_best.pt", map_location=torch.device('cpu')))
 
 for image in os.listdir(os.path.join(data_path, 'anomaly')):
     if image.endswith('.jpg'):

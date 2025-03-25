@@ -5,7 +5,7 @@ from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 from model import CNNModel
-from CNN.model_q import CNNModel_LSQ
+from model_q import CNNModel_LSQ
 from torchsummary import summary
 from dataset import train_loader, val_loader
 from utils import get_lr, loss_epoch
